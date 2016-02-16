@@ -24,7 +24,7 @@
 #import "PBURLBuilder.h"
 
 const static short kSupportedMajorVersion = 10;
-const static short kSupportedMinorVersion = 10;
+const static short kSupportedMinorVersion = 11;
 const static char *kMachineInfo = "/Library/Preferences/com.megacorp.machineinfo.plist";
 const static char *kSystemInfo = "/System/Library/CoreServices/SystemVersion.plist";
 
