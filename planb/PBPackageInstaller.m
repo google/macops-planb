@@ -3,7 +3,7 @@
  Plan B
  PBPackageInstaller.m
 
- Copyright 2014 Google Inc.
+ Copyright 2016 Google Inc.
 
  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  use this file except in compliance with the License.  You may obtain a copy
@@ -244,6 +244,10 @@
   // If task has exceeded its timeout, kill it.
   if ([task isRunning]) {
     kill([task processIdentifier], SIGKILL);
+    sleep(1);
+    if ([task isRunning]) {
+      return nil;
+    }
   }
 
   return stdBuff;
