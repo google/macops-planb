@@ -233,10 +233,14 @@ const char *kConnectionDelegateScheme = "https";
       for (NSData *allowedIssuer in protectionSpace.distinguishedNames) {
         PBDERDecoder *decoder = [[PBDERDecoder alloc] initWithData:allowedIssuer];
         if (!decoder) continue;
-        if ([clientCert.issuerCommonName isEqual:decoder.commonName] &&
-            [clientCert.issuerCountryName isEqual:decoder.countryName] &&
-            [clientCert.issuerOrgName isEqual:decoder.organizationName] &&
-            [clientCert.issuerOrgUnit isEqual:decoder.organizationalUnit]) {
+        if ((!decoder.commonName ||
+             [decoder.commonName isEqual:clientCert.issuerCommonName]) &&
+            (!decoder.countryName ||
+             [decoder.countryName isEqual:clientCert.issuerCountryName]) &&
+            (!decoder.organizationName ||
+             [decoder.organizationName isEqual:clientCert.issuerOrgName]) &&
+            (!decoder.organizationalUnit ||
+             [decoder.organizationalUnit isEqual:clientCert.issuerOrgUnit])) {
           PBLog(@"Found accepted client identity: %@", clientCert);
           _foundIdentity = identityRef;
           CFRetain(_foundIdentity);
