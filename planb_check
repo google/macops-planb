@@ -85,7 +85,7 @@ function check_lastsuccess() {
 
 
 function run_planb() {
-  ${PLANB}
+  ( ${PLANB} ) & sleep ${PLANB_TIMEOUT} ; kill $!
   exit 0
 }
 
