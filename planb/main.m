@@ -21,23 +21,13 @@
 
 */
 
-#import "PBConnectionDelegate.h"
+#include "roots.pem.h"
+
 #import "PBLogging.h"
 #import "PBPackageInstaller.h"
 #import "PBURLBuilder.h"
 
-static NSString *CreateTmpDownloadDirectory() {
-  char tmpdir[22];
-  strncpy(tmpdir, "/tmp/planb-dmg.XXXXXX", sizeof tmpdir);
-
-  if (!mkdtemp(tmpdir)) {
-    PBLog(@"Error: Could not create temporary download directory %s.", tmpdir);
-    return NULL;
-  }
-
-  return [[NSFileManager defaultManager] stringWithFileSystemRepresentation:tmpdir
-                                                                     length:strlen(tmpdir)];
-}
+#import <MOLAuthenticatingURLSession/MOLAuthenticatingURLSession.h>
 
 int main(int argc, const char * argv[]) {
   @autoreleasepool {
@@ -47,9 +37,26 @@ int main(int argc, const char * argv[]) {
       exit(99);
     }
 
-    PBLog(@"Starting planb");
+    PBLog(@"Starting %s", argv[0]);
 
     __block BOOL installComplete = NO;
+
+    NSURLSessionConfiguration *config = [NSURLSessionConfiguration ephemeralSessionConfiguration];
+    config.URLCache = nil;
+    config.timeoutIntervalForResource = 30;
+
+    if (![[[NSProcessInfo processInfo] arguments] containsObject:@"--use-proxy"]) {
+      config.connectionProxyDictionary = @{ (NSString *)kCFNetworkProxiesHTTPSEnable: @NO };
+    }
+
+    MOLAuthenticatingURLSession *authURLSession =
+        [[MOLAuthenticatingURLSession alloc] initWithSessionConfiguration:config];
+
+    authURLSession.serverRootsPemData = [NSData dataWithBytes:ROOTS_PEM length:ROOTS_PEM_len];
+    authURLSession.refusesRedirects = YES;
+    authURLSession.loggingBlock = ^(NSString *line) {
+      PBLog(@"%@", line);
+    };
 
     NSArray *packages = @[
       @[ @"pkg1/package1", @"com.megacorp.package1" ],
@@ -60,61 +67,32 @@ int main(int argc, const char * argv[]) {
     for (NSArray *packageTuple in packages) {
       NSString *item = [packageTuple objectAtIndex:0];
       NSString *receiptName = [packageTuple objectAtIndex:1];
-
-      PBConnectionDelegate *connDel =
-          [[PBConnectionDelegate alloc] initWithDownloadDir:CreateTmpDownloadDirectory()
-                                            finishedHandler:^(NSString *path) {
-
-          installComplete = YES;
-          if (!path) {
-            // Fast fail if the connection cannot be established.
-            return;
-          }
-
-          PBPackageInstaller *pkg = [[PBPackageInstaller alloc] initWithReceiptName:receiptName
-                                                                    packagePath:path
-                                                                   targetVolume:@"/"];
-          [pkg installApplication];
-
-          PBLog(@"Finished with %@", item);
-      }];
-
       NSURL *url = [URLBuilder URLForTrackWithPkg:item];
-      PBLog(@"Requesting %@", url);
 
-      // Disable disk and memory caching of downloads.
-      [NSURLCache setSharedURLCache:[[NSURLCache alloc] initWithMemoryCapacity:0
-                                                                  diskCapacity:0
-                                                                      diskPath:nil]];
+      PBLog(@"Requesting %@", url.absoluteString);
 
-      // Also instruct NSURLRequest to ignore local and remote caches; download only from source.
-      NSURLRequest *urlReq = [NSURLRequest requestWithURL:url
-                                              cachePolicy:NSURLRequestReloadIgnoringLocalAndRemoteCacheData
-                                          timeoutInterval:30];
+      [[authURLSession.session downloadTaskWithURL:url
+                                 completionHandler:^(NSURL *location,
+                                                     NSURLResponse *response,
+                                                     NSError *error) {
+        PBPackageInstaller *pkg =
+            [[PBPackageInstaller alloc] initWithReceiptName:receiptName
+                                                packagePath:[location absoluteString]
+                                               targetVolume:@"/"];
+        [pkg installApplication];
+        installComplete = YES;
 
-      NSURLConnection *urlConn = [[NSURLConnection alloc] initWithRequest:urlReq
-                                                                 delegate:connDel];
+        PBLog(@"Finished with %@", item);
+      }] resume];
 
       installComplete = NO;
-      [urlConn start];
 
       while (!installComplete) {
         [[NSRunLoop mainRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
       }
-
-      // Clean up temporary download directory.
-      if (connDel.downloadDir) {
-        NSError *err;
-        if ([connDel.downloadDir hasPrefix:@"/tmp/planb-dmg"]) {
-          if (![[NSFileManager defaultManager] removeItemAtPath:connDel.downloadDir
-                                                          error:&err]) {
-            PBLog(@"Error: could not delete download directory %@: %@", connDel.downloadDir, err);
-          }
-        }
-      }
     }
-  }
 
-  return 0;
+    return 0;
+  }
 }
 
