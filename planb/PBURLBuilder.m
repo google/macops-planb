@@ -19,12 +19,13 @@
 
 */
 
-#import "PBConnectionDelegate.h"
 #import "PBLogging.h"
 #import "PBURLBuilder.h"
 
+NSString * const kBaseURL = @"https://mac.internal.megacorp.com/pkgs/";
+
 const static short kSupportedMajorVersion = 10;
-const static short kSupportedMinorVersion = 11;
+const static short kSupportedMinorVersion = 12;
 const static char *kMachineInfo = "/Library/Preferences/com.megacorp.machineinfo.plist";
 const static char *kSystemInfo = "/System/Library/CoreServices/SystemVersion.plist";
 
@@ -62,13 +63,8 @@ const static char *kSystemInfo = "/System/Library/CoreServices/SystemVersion.pli
     }
   }
 
-  NSURLComponents *resultURLString = [[NSURLComponents alloc] init];
-  resultURLString.scheme = @(kConnectionDelegateScheme);
-  resultURLString.host = kConnectionDelegateHost;
-  resultURLString.path = [NSString stringWithFormat:@"/%s/%@-%@.dmg",
-                          kConnectionDelegatePackageBase, pkg, track];
-
-  return [resultURLString URL];
+  NSString *path = [NSString stringWithFormat:@"%@-%@.dmg", pkg, track];
+  return [NSURL URLWithString:path relativeToURL:[NSURL URLWithString:kBaseURL]];
 }
 
 @end

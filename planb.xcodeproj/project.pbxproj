@@ -7,14 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0D6F12DD19EEDD80006B218E /* PBDERDecoder.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D6F12DC19EEDD80006B218E /* PBDERDecoder.m */; };
 		490A51DD18D7581B00DA939E /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 490A51DC18D7581B00DA939E /* Foundation.framework */; };
-		490A51E018D7581B00DA939E /* PBConnectionDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 490A51DF18D7581B00DA939E /* PBConnectionDelegate.m */; };
 		490A51ED18D7765500DA939E /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 490A51EC18D7765500DA939E /* main.m */; };
 		490A51EF18D7769200DA939E /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 490A51EE18D7769200DA939E /* Security.framework */; };
 		490A51F218D77D2400DA939E /* PBPackageInstaller.m in Sources */ = {isa = PBXBuildFile; fileRef = 490A51F118D77D2400DA939E /* PBPackageInstaller.m */; };
 		490A51F518D784EF00DA939E /* PBURLBuilder.m in Sources */ = {isa = PBXBuildFile; fileRef = 490A51F418D784EF00DA939E /* PBURLBuilder.m */; };
-		49B3480E1A02CAA800F4FE84 /* PBCertificate.m in Sources */ = {isa = PBXBuildFile; fileRef = 49B3480C1A02CAA800F4FE84 /* PBCertificate.m */; };
+		E8D16F74B748B8590CBAF427 /* libPods-planb.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C2E5CED56076D8EF8C6C6A07 /* libPods-planb.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -30,23 +28,20 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		0D6F12DB19EEDD80006B218E /* PBDERDecoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PBDERDecoder.h; sourceTree = "<group>"; };
-		0D6F12DC19EEDD80006B218E /* PBDERDecoder.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.objc; path = PBDERDecoder.m; sourceTree = "<group>"; tabWidth = 2; };
 		0D789FD819461AC50036F7C4 /* roots.pem */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = roots.pem; sourceTree = "<group>"; };
+		1FFD8688FFB22014A92F8D11 /* Pods-planb.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-planb.debug.xcconfig"; path = "Pods/Target Support Files/Pods-planb/Pods-planb.debug.xcconfig"; sourceTree = "<group>"; };
+		39BB32E66CD18153F1F3AB32 /* Pods-planb.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-planb.release.xcconfig"; path = "Pods/Target Support Files/Pods-planb/Pods-planb.release.xcconfig"; sourceTree = "<group>"; };
 		490A51D918D7581B00DA939E /* planb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = planb; sourceTree = BUILT_PRODUCTS_DIR; };
 		490A51DC18D7581B00DA939E /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		490A51DF18D7581B00DA939E /* PBConnectionDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PBConnectionDelegate.m; sourceTree = "<group>"; };
 		490A51E218D7581B00DA939E /* planb-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "planb-Prefix.pch"; sourceTree = "<group>"; };
-		490A51EA18D7703A00DA939E /* PBConnectionDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PBConnectionDelegate.h; sourceTree = "<group>"; };
 		490A51EC18D7765500DA939E /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		490A51EE18D7769200DA939E /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		490A51F018D77D2400DA939E /* PBPackageInstaller.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PBPackageInstaller.h; sourceTree = "<group>"; };
 		490A51F118D77D2400DA939E /* PBPackageInstaller.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PBPackageInstaller.m; sourceTree = "<group>"; };
 		490A51F318D784EF00DA939E /* PBURLBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PBURLBuilder.h; sourceTree = "<group>"; };
 		490A51F418D784EF00DA939E /* PBURLBuilder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PBURLBuilder.m; sourceTree = "<group>"; };
-		49B3480B1A02CAA800F4FE84 /* PBCertificate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PBCertificate.h; sourceTree = "<group>"; };
-		49B3480C1A02CAA800F4FE84 /* PBCertificate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PBCertificate.m; sourceTree = "<group>"; };
 		49B3480D1A02CAA800F4FE84 /* PBLogging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PBLogging.h; sourceTree = "<group>"; };
+		C2E5CED56076D8EF8C6C6A07 /* libPods-planb.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-planb.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,6 +51,7 @@
 			files = (
 				490A51EF18D7769200DA939E /* Security.framework in Frameworks */,
 				490A51DD18D7581B00DA939E /* Foundation.framework in Frameworks */,
+				E8D16F74B748B8590CBAF427 /* libPods-planb.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -68,6 +64,7 @@
 				490A51DE18D7581B00DA939E /* planb */,
 				490A51DB18D7581B00DA939E /* Frameworks */,
 				490A51DA18D7581B00DA939E /* Products */,
+				8ACC6787FD1FDB2F1D141A1C /* Pods */,
 			);
 			sourceTree = "<group>";
 		};
@@ -84,6 +81,7 @@
 			children = (
 				490A51EE18D7769200DA939E /* Security.framework */,
 				490A51DC18D7581B00DA939E /* Foundation.framework */,
+				C2E5CED56076D8EF8C6C6A07 /* libPods-planb.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -91,15 +89,9 @@
 		490A51DE18D7581B00DA939E /* planb */ = {
 			isa = PBXGroup;
 			children = (
-				49B3480B1A02CAA800F4FE84 /* PBCertificate.h */,
-				49B3480C1A02CAA800F4FE84 /* PBCertificate.m */,
 				49B3480D1A02CAA800F4FE84 /* PBLogging.h */,
-				490A51EA18D7703A00DA939E /* PBConnectionDelegate.h */,
-				490A51DF18D7581B00DA939E /* PBConnectionDelegate.m */,
 				490A51F018D77D2400DA939E /* PBPackageInstaller.h */,
 				490A51F118D77D2400DA939E /* PBPackageInstaller.m */,
-				0D6F12DB19EEDD80006B218E /* PBDERDecoder.h */,
-				0D6F12DC19EEDD80006B218E /* PBDERDecoder.m */,
 				490A51F318D784EF00DA939E /* PBURLBuilder.h */,
 				490A51F418D784EF00DA939E /* PBURLBuilder.m */,
 				490A51EC18D7765500DA939E /* main.m */,
@@ -117,6 +109,15 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
+		8ACC6787FD1FDB2F1D141A1C /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				1FFD8688FFB22014A92F8D11 /* Pods-planb.debug.xcconfig */,
+				39BB32E66CD18153F1F3AB32 /* Pods-planb.release.xcconfig */,
+			);
+			name = Pods;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -124,10 +125,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 490A51E718D7581B00DA939E /* Build configuration list for PBXNativeTarget "planb" */;
 			buildPhases = (
+				8563872E9418485E04F5F70B /* [CP] Check Pods Manifest.lock */,
 				0D789FD6194619C40036F7C4 /* Generate roots.pem.h */,
 				490A51D518D7581B00DA939E /* Sources */,
 				490A51D618D7581B00DA939E /* Frameworks */,
 				490A51D718D7581B00DA939E /* CopyFiles */,
+				450FBE8FE0A109E05DC9E5CD /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -180,6 +183,36 @@
 			shellPath = /bin/sh;
 			shellScript = "cp ${SRCROOT}/planb/roots.pem ${DERIVED_FILE_DIR}/ROOTS.PEM\n\ncd ${DERIVED_FILE_DIR}\n\n# Remove comments\nsed -i '' -e '/^#.*/d' ROOTS.PEM\n\n# Remove empty lines\nsed -i '' -e '/^$/d' ROOTS.PEM\n\nxxd -i ROOTS.PEM > roots.pem.h\n\nrm ROOTS.PEM";
 		};
+		450FBE8FE0A109E05DC9E5CD /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-planb/Pods-planb-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		8563872E9418485E04F5F70B /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
+			showEnvVarsInLog = 0;
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -189,9 +222,6 @@
 			files = (
 				490A51ED18D7765500DA939E /* main.m in Sources */,
 				490A51F518D784EF00DA939E /* PBURLBuilder.m in Sources */,
-				490A51E018D7581B00DA939E /* PBConnectionDelegate.m in Sources */,
-				0D6F12DD19EEDD80006B218E /* PBDERDecoder.m in Sources */,
-				49B3480E1A02CAA800F4FE84 /* PBCertificate.m in Sources */,
 				490A51F218D77D2400DA939E /* PBPackageInstaller.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -271,6 +301,7 @@
 		};
 		490A51E818D7581B00DA939E /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 1FFD8688FFB22014A92F8D11 /* Pods-planb.debug.xcconfig */;
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "planb/planb-Prefix.pch";
@@ -281,6 +312,7 @@
 		};
 		490A51E918D7581B00DA939E /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 39BB32E66CD18153F1F3AB32 /* Pods-planb.release.xcconfig */;
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "planb/planb-Prefix.pch";
