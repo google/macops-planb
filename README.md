@@ -17,17 +17,17 @@ Features
 Usage
 ------
 
-First, create a server which will host disk images containing a single `.pkg` package file on each `.dmg`.
+First, create a Web server which will host disk images containing a single `.pkg` package file on each `.dmg` disk image file.
 
-There is a shell script included to help you generate a public-key infrastructure, if one is not already in place. There are also many excellent guides and programs, like `easy-rsa`, available online.
+There is a shell script included in this directory to generate a public-key infrastructure, if one is not already in place. There are also many excellent guides and programs, like `easy-rsa`, available online.
 
 If the server has enabled client certificate authentication, first install the client certificate and private key to system keychain. You may first need to convert them to PKCS#12 format with something like, `openssl pkcs12 -export -in client.crt -inkey client.key -certfile ca.pem -out client.p12`. Otherwise, the program will perform server certificate validation only.
 
 Compiling Plan B requires a modern version of Xcode, available from Apple's Developer site.
 
-* Download the source code with `git clone https://github.com/google/macops` 
+* Download the source code with `git clone https://github.com/google/macops-planb` 
 
-* Open the Xcode project with `open macops/planb/planb.xcodeproj`
+* Open the Xcode project with `open macops-planb/planb.xcodeproj`
 
 * Edit `PBURLBuilder.m` and change `kBaseURL` to the URL of the server and folder containing disk images. By default, the program will use `https://mac.internal.megacorp.com/pkgs/`
 
@@ -39,7 +39,7 @@ Compiling Plan B requires a modern version of Xcode, available from Apple's Deve
 
 * Install required Cocoa Pod(s) with `pod install`
 
-* Compile the program with `xcodebuild -workspace planb.xcworkspace -scheme planb -configuration Release`
+* Compile the program with `xcodebuild -workspace planb.xcworkspace -scheme planb -configuration Release`. It will appear in `./Build/Products/Release/planb`
 
 The planb binary must be run as `root` in order to install packages. It will run on its own without any external dependencies.
 
