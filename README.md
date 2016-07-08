@@ -29,7 +29,7 @@ Compiling Plan B requires a modern version of Xcode, available from Apple's Deve
 
 * Install required CocoaPods with `pod install`
 
-* Open the Xcode project with `open macops-planb/planb.xcodeproj`
+* Open the Xcode project with `open macops-planb/planb.xcworkspace`
 
 * Edit `PBURLBuilder.m` and change `kBaseURL` to the URL of the server and folder containing disk images. By default, the program will use `https://mac.internal.megacorp.com/pkgs/`
 
