@@ -41,7 +41,7 @@ Compiling Plan B requires a modern version of Xcode, available from Apple's Deve
 
 * Compile the program with `xcodebuild -workspace planb.xcworkspace -scheme planb -configuration Release`. It will appear in `./Build/Products/Release/planb`
 
-The planb binary must be run as `root` in order to install packages. It will run on its own without any external dependencies.
+The planb binary must be run as *root* in order to install packages. It will run on its own without any external dependencies.
 
 Deployment
 ----------
