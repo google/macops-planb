@@ -24,23 +24,23 @@
 #import "PBLogging.h"
 #import "PBPackageInstaller.h"
 
+@interface PBPackageInstaller ()
+
+/// Path to mounted disk image, e.g. '/tmp/planb-pkg.duc3eP'.
+@property(nonatomic, copy) NSString *mountPoint;
+
+/// Path to temporary dmg file, e.g. '/tmp/planb-dmg.ihI1UV/pkg-stable.dmg'.
+@property(nonatomic, copy) NSString *packagePath;
+
+/// Package receipt name, e.g. 'com.megacorp.corp.pkg'.
+@property(nonatomic, copy) NSString *receiptName;
+
+/// Target volume for installation, e.g. '/'.
+@property(nonatomic, copy) NSString *targetVolume;
+
+@end
+
 @implementation PBPackageInstaller
-
-+ (NSString *)SHA1ForFileAtPath:(NSString *)path {
-  unsigned char sha1[CC_SHA1_DIGEST_LENGTH];
-  NSData *fileData = [NSData dataWithContentsOfFile:path
-                                            options:NSDataReadingMappedIfSafe
-                                              error:nil];
-
-  CC_SHA1([fileData bytes], (unsigned int)[fileData length], sha1);
-  NSMutableString *buf = [[NSMutableString alloc] initWithCapacity:CC_SHA1_DIGEST_LENGTH * 2];
-
-  for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++) {
-    [buf appendFormat:@"%02x", (unsigned char)sha1[i]];
-  }
-
-  return buf;
-}
 
 - (instancetype)initWithReceiptName:(NSString *)receiptName
                         packagePath:(NSString *)packagePath
@@ -48,13 +48,13 @@
   self = [super init];
 
   if (self) {
+    if (!receiptName.length || !packagePath.length || !targetVolume.length) {
+      return nil;
+    }
+
     _receiptName = receiptName;
     _packagePath = packagePath;
     _targetVolume = targetVolume;
-
-    if (![_receiptName length] || ![_packagePath length] || ![_targetVolume length]) {
-      return nil;
-    }
   }
 
   return self;
@@ -63,8 +63,7 @@
 - (NSString *)firstPackageOnImage {
   NSFileManager *fm = [NSFileManager defaultManager];
   NSError *fmError = nil;
-  NSArray *dirContents = [fm contentsOfDirectoryAtPath:_mountPoint
-                                                 error:&fmError];
+  NSArray *dirContents = [fm contentsOfDirectoryAtPath:self.mountPoint error:&fmError];
   if (fmError) {
     PBLog(@"Error: could not determine package path: %@", fmError);
     return nil;
@@ -76,49 +75,42 @@
 }
 
 - (void)installApplication {
-  char tmpdir[22];
-  strncpy(tmpdir, "/tmp/planb-pkg.XXXXXX", sizeof tmpdir);
+  NSFileManager *fm = [NSFileManager defaultManager];
 
+  char tmpdir[] = "/tmp/planb-pkg.XXXXXX";
   if (!mkdtemp(tmpdir)) {
     PBLog(@"Error: Could not create temporary installation directory %s.", tmpdir);
     return;
   }
 
-  _mountPoint = [[NSFileManager defaultManager] stringWithFileSystemRepresentation:tmpdir
-                                                                            length:strlen(tmpdir)];
-
-  if ([self runDiskUtilityWithLocation:_packagePath
-                             operation:@"attach"]) {
+  self.mountPoint = [fm stringWithFileSystemRepresentation:tmpdir length:strlen(tmpdir)];
+  if ([self runDiskUtilityWithLocation:self.packagePath operation:@"attach"]) {
     PBLog(@"Mounted %@ (SHA1: %@) to %@",
-          _packagePath,
-          [PBPackageInstaller SHA1ForFileAtPath:_packagePath],
-          _mountPoint);
+          self.packagePath,
+          [self SHA1ForFileAtPath:self.packagePath],
+          self.mountPoint);
 
-    [self forgetPackageWithName:_receiptName];
-    [self installPackageFromLocation:[self firstPackageOnImage]
-                            toVolume:_targetVolume];
+    [self forgetPackageWithName:self.receiptName];
+    [self installPackageFromLocation:[self firstPackageOnImage] toVolume:self.targetVolume];
   }
 
-  [self runDiskUtilityWithLocation:_packagePath
-                         operation:@"detach"];
+  [self runDiskUtilityWithLocation:self.packagePath operation:@"detach"];
 
   NSError *err;
-  [[NSFileManager defaultManager] removeItemAtPath:_mountPoint
-                                             error:&err];
+  [fm removeItemAtPath:self.mountPoint error:&err];
   if (err) {
     PBLog(@"Error: could not delete temporary mount point %@: %@",
-          _mountPoint, err.localizedDescription);
+          self.mountPoint, err.localizedDescription);
   }
 }
 
-- (BOOL)runDiskUtilityWithLocation:(NSString *)location
-                         operation:(NSString *)operation {
+- (BOOL)runDiskUtilityWithLocation:(NSString *)location operation:(NSString *)operation {
   NSArray *args;
 
   if ([operation isEqual:@"attach"]) {
-    args = @[ operation, location, @"-nobrowse", @"-readonly", @"-mountpoint", _mountPoint ];
+    args = @[ operation, location, @"-nobrowse", @"-readonly", @"-mountpoint", self.mountPoint ];
   } else if ([operation isEqual:@"detach"]) {
-    args = @[ operation, @"-force", _mountPoint ];
+    args = @[ operation, @"-force", self.mountPoint ];
   } else {
     return NO;
   }
@@ -133,32 +125,29 @@
   [hdiutil setStandardInput:[NSPipe pipe]];
   @try {
     [hdiutil launch];
-  }
-  @catch (NSException *exception) {
+  } @catch (NSException *exception) {
     PBLog(@"Exception: hdiutil failed to launch.");
     return NO;
   }
 
-  NSMutableData *stdBuff = [self runTask:hdiutil outputPipe:pipe timeout:30];
+  NSData *stdBuff = [self runTask:hdiutil outputPipe:pipe timeout:30];
 
   if (stdBuff && [hdiutil terminationStatus] == 0) {
     return YES;
   } else {
-    NSString *pipeOut = [[NSString alloc] initWithData:stdBuff
-                                              encoding:NSUTF8StringEncoding];
-    PBLog(@"Error: failed to %@ %@: %@", operation, _packagePath, pipeOut);
+    NSString *pipeOut = [[NSString alloc] initWithData:stdBuff encoding:NSUTF8StringEncoding];
+    PBLog(@"Error: failed to %@ %@: %@", operation, self.packagePath, pipeOut);
     return NO;
   }
 }
 
-- (BOOL)installPackageFromLocation:(NSString *)location
-                          toVolume:(NSString *)volume {
+- (BOOL)installPackageFromLocation:(NSString *)location toVolume:(NSString *)volume {
   if ([[location pathComponents] count] != 1) {
     PBLog(@"Error: %@ is not a direct subpath.", location);
     return NO;
   }
 
-  NSString *packageLocation = [_mountPoint stringByAppendingPathComponent:location];
+  NSString *packageLocation = [self.mountPoint stringByAppendingPathComponent:location];
   NSArray *args = @[ @"-pkg", packageLocation, @"-tgt", volume ];
   NSTask *installer = [[NSTask alloc] init];
   NSPipe *pipe = [NSPipe pipe];
@@ -172,14 +161,13 @@
   [installer setStandardInput:[NSPipe pipe]];
   @try {
     [installer launch];
-  }
-  @catch (NSException *exception) {
+  } @catch (NSException *exception) {
     PBLog(@"Exception: installer failed to launch.");
     return NO;
   }
 
   // some packages may take several minutes to install, especially if they have postlight scripts.
-  NSMutableData *stdBuff = [self runTask:installer outputPipe:pipe timeout:60 * 5];
+  NSData *stdBuff = [self runTask:installer outputPipe:pipe timeout:60 * 5];
 
   if (stdBuff && [installer terminationStatus] == 0) {
     // DMG may be ejected before installer is done, so sleep for a few seconds first.
@@ -212,22 +200,19 @@
     return NO;
   }
 
-  NSMutableData *stdBuff = [self runTask:pkgutil outputPipe:pipe timeout:3];
+  NSData *stdBuff = [self runTask:pkgutil outputPipe:pipe timeout:3];
 
   if (stdBuff && [pkgutil terminationStatus] == 0) {
-    PBLog(@"Forgot %@", _receiptName);
+    PBLog(@"Forgot %@", self.receiptName);
     return YES;
   } else {
-    NSString *pipeOut = [[NSString alloc] initWithData:stdBuff
-                                              encoding:NSUTF8StringEncoding];
-    PBLog(@"Error: cannot forget %@: %@", _receiptName, pipeOut);
+    NSString *pipeOut = [[NSString alloc] initWithData:stdBuff encoding:NSUTF8StringEncoding];
+    PBLog(@"Error: cannot forget %@: %@", self.receiptName, pipeOut);
     return NO;
   }
 }
 
-- (NSMutableData *)runTask:(NSTask *)task
-                outputPipe:(NSPipe *)pipe
-                   timeout:(NSTimeInterval)timeout {
+- (NSData *)runTask:(NSTask *)task outputPipe:(NSPipe *)pipe timeout:(NSTimeInterval)timeout {
   NSDate *startDate = [NSDate date];
   NSMutableData *stdBuff = [[NSMutableData alloc] init];
 
@@ -236,7 +221,7 @@
 
     NSData *availableData = [[pipe fileHandleForReading] availableData];
 
-    if ([availableData length]) {
+    if (availableData.length) {
       [stdBuff appendData:availableData];
     }
   } while ([task isRunning] && -[startDate timeIntervalSinceNow] < timeout);
@@ -250,7 +235,23 @@
     }
   }
 
-  return stdBuff;
+  return [stdBuff copy];
+}
+
+- (NSString *)SHA1ForFileAtPath:(NSString *)path {
+  unsigned char sha1[CC_SHA1_DIGEST_LENGTH];
+  NSData *fileData = [NSData dataWithContentsOfFile:path
+                                            options:NSDataReadingMappedIfSafe
+                                              error:nil];
+
+  CC_SHA1([fileData bytes], (unsigned int)[fileData length], sha1);
+  NSMutableString *buf = [[NSMutableString alloc] initWithCapacity:CC_SHA1_DIGEST_LENGTH * 2];
+
+  for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++) {
+    [buf appendFormat:@"%02x", (unsigned char)sha1[i]];
+  }
+
+  return buf;
 }
 
 @end
