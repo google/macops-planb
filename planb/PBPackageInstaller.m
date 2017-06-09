@@ -26,17 +26,17 @@
 
 @interface PBPackageInstaller ()
 
-/// Path to mounted disk image, e.g. '/tmp/planb-pkg.duc3eP'.
-@property(nonatomic, copy) NSString *mountPoint;
+/// Package receipt name, e.g. 'com.megacorp.corp.pkg'.
+@property(readonly, nonatomic, copy) NSString *receiptName;
 
 /// Path to temporary dmg file, e.g. '/tmp/planb-dmg.ihI1UV/pkg-stable.dmg'.
-@property(nonatomic, copy) NSString *packagePath;
-
-/// Package receipt name, e.g. 'com.megacorp.corp.pkg'.
-@property(nonatomic, copy) NSString *receiptName;
+@property(readonly, nonatomic, copy) NSString *packagePath;
 
 /// Target volume for installation, e.g. '/'.
-@property(nonatomic, copy) NSString *targetVolume;
+@property(readonly, nonatomic, copy) NSString *targetVolume;
+
+/// Path to mounted disk image, e.g. '/tmp/planb-pkg.duc3eP'.
+@property(readonly, nonatomic, copy) NSString *mountPoint;
 
 @end
 
@@ -52,9 +52,9 @@
       return nil;
     }
 
-    _receiptName = receiptName;
-    _packagePath = packagePath;
-    _targetVolume = targetVolume;
+    _receiptName = [receiptName copy];
+    _packagePath = [packagePath copy];
+    _targetVolume = [targetVolume copy];
   }
 
   return self;
@@ -244,11 +244,11 @@
                                             options:NSDataReadingMappedIfSafe
                                               error:nil];
 
-  CC_SHA1([fileData bytes], (unsigned int)[fileData length], sha1);
+  CC_SHA1(fileData.bytes, (unsigned int)fileData.length, sha1);
   NSMutableString *buf = [[NSMutableString alloc] initWithCapacity:CC_SHA1_DIGEST_LENGTH * 2];
 
   for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++) {
-    [buf appendFormat:@"%02x", (unsigned char)sha1[i]];
+    [buf appendFormat:@"%02x", sha1[i]];
   }
 
   return buf;
