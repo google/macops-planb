@@ -244,7 +244,7 @@
                                             options:NSDataReadingMappedIfSafe
                                               error:nil];
 
-  CC_SHA1(fileData.bytes, (unsigned int)fileData.length, sha1);
+  CC_SHA1(fileData.bytes, (CC_LONG)fileData.length, sha1);
   NSMutableString *buf = [[NSMutableString alloc] initWithCapacity:CC_SHA1_DIGEST_LENGTH * 2];
 
   for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++) {
