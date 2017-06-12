@@ -71,14 +71,12 @@ int main(int argc, const char * argv[]) {
 
       PBLog(@"Requesting %@", url.absoluteString);
 
-      [[authURLSession.session downloadTaskWithURL:url
-                                 completionHandler:^(NSURL *location,
-                                                     NSURLResponse *response,
-                                                     NSError *error) {
-        PBPackageInstaller *pkg =
-            [[PBPackageInstaller alloc] initWithReceiptName:receiptName
-                                                packagePath:[location absoluteString]
-                                               targetVolume:@"/"];
+      [[authURLSession.session downloadTaskWithURL:url completionHandler:^(NSURL *location,
+                                                                           NSURLResponse *response,
+                                                                           NSError *error) {
+        PBPackageInstaller *pkg = [[PBPackageInstaller alloc] initWithReceiptName:receiptName
+                                                                      packagePath:location.path
+                                                                     targetVolume:@"/"];
         [pkg installApplication];
         installComplete = YES;
 
