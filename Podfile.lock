@@ -1,0 +1,15 @@
+PODS:
+  - MOLAuthenticatingURLSession (2.2):
+    - MOLCertificate (~> 1.5)
+  - MOLCertificate (1.5)
+
+DEPENDENCIES:
+  - MOLAuthenticatingURLSession
+
+SPEC CHECKSUMS:
+  MOLAuthenticatingURLSession: 5a5e31eb73248c3e92c79b9a285f031194e8404c
+  MOLCertificate: c39cae866d24d36fbc78032affff83d401b5384a
+
+PODFILE CHECKSUM: 5febcbf6dc5fbde870f29e0902990903533effcf
+
+COCOAPODS: 1.2.0

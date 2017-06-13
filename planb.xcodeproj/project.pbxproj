@@ -7,11 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0D6D8EAE1EEEF53400B93029 /* PBCommandController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0D6D8EAD1EEEF53400B93029 /* PBCommandController.m */; };
 		490A51DD18D7581B00DA939E /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 490A51DC18D7581B00DA939E /* Foundation.framework */; };
 		490A51ED18D7765500DA939E /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 490A51EC18D7765500DA939E /* main.m */; };
 		490A51EF18D7769200DA939E /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 490A51EE18D7769200DA939E /* Security.framework */; };
 		490A51F218D77D2400DA939E /* PBPackageInstaller.m in Sources */ = {isa = PBXBuildFile; fileRef = 490A51F118D77D2400DA939E /* PBPackageInstaller.m */; };
-		490A51F518D784EF00DA939E /* PBURLBuilder.m in Sources */ = {isa = PBXBuildFile; fileRef = 490A51F418D784EF00DA939E /* PBURLBuilder.m */; };
 		E8D16F74B748B8590CBAF427 /* libPods-planb.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C2E5CED56076D8EF8C6C6A07 /* libPods-planb.a */; };
 /* End PBXBuildFile section */
 
@@ -28,18 +28,17 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0D6D8EAC1EEEF53400B93029 /* PBCommandController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PBCommandController.h; sourceTree = "<group>"; };
+		0D6D8EAD1EEEF53400B93029 /* PBCommandController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PBCommandController.m; sourceTree = "<group>"; };
 		0D789FD819461AC50036F7C4 /* roots.pem */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = roots.pem; sourceTree = "<group>"; };
 		1FFD8688FFB22014A92F8D11 /* Pods-planb.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-planb.debug.xcconfig"; path = "Pods/Target Support Files/Pods-planb/Pods-planb.debug.xcconfig"; sourceTree = "<group>"; };
 		39BB32E66CD18153F1F3AB32 /* Pods-planb.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-planb.release.xcconfig"; path = "Pods/Target Support Files/Pods-planb/Pods-planb.release.xcconfig"; sourceTree = "<group>"; };
 		490A51D918D7581B00DA939E /* planb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = planb; sourceTree = BUILT_PRODUCTS_DIR; };
 		490A51DC18D7581B00DA939E /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		490A51E218D7581B00DA939E /* planb-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "planb-Prefix.pch"; sourceTree = "<group>"; };
 		490A51EC18D7765500DA939E /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		490A51EE18D7769200DA939E /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		490A51F018D77D2400DA939E /* PBPackageInstaller.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PBPackageInstaller.h; sourceTree = "<group>"; };
 		490A51F118D77D2400DA939E /* PBPackageInstaller.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PBPackageInstaller.m; sourceTree = "<group>"; };
-		490A51F318D784EF00DA939E /* PBURLBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PBURLBuilder.h; sourceTree = "<group>"; };
-		490A51F418D784EF00DA939E /* PBURLBuilder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PBURLBuilder.m; sourceTree = "<group>"; };
 		49B3480D1A02CAA800F4FE84 /* PBLogging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PBLogging.h; sourceTree = "<group>"; };
 		C2E5CED56076D8EF8C6C6A07 /* libPods-planb.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-planb.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -89,12 +88,12 @@
 		490A51DE18D7581B00DA939E /* planb */ = {
 			isa = PBXGroup;
 			children = (
+				490A51EC18D7765500DA939E /* main.m */,
+				0D6D8EAC1EEEF53400B93029 /* PBCommandController.h */,
+				0D6D8EAD1EEEF53400B93029 /* PBCommandController.m */,
 				49B3480D1A02CAA800F4FE84 /* PBLogging.h */,
 				490A51F018D77D2400DA939E /* PBPackageInstaller.h */,
 				490A51F118D77D2400DA939E /* PBPackageInstaller.m */,
-				490A51F318D784EF00DA939E /* PBURLBuilder.h */,
-				490A51F418D784EF00DA939E /* PBURLBuilder.m */,
-				490A51EC18D7765500DA939E /* main.m */,
 				0D789FD819461AC50036F7C4 /* roots.pem */,
 				490A51E118D7581B00DA939E /* Supporting Files */,
 			);
@@ -104,7 +103,6 @@
 		490A51E118D7581B00DA939E /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				490A51E218D7581B00DA939E /* planb-Prefix.pch */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -147,7 +145,7 @@
 		490A51D118D7581B00DA939E /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0600;
+				LastUpgradeCheck = 0820;
 			};
 			buildConfigurationList = 490A51D418D7581B00DA939E /* Build configuration list for PBXProject "planb" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -221,7 +219,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				490A51ED18D7765500DA939E /* main.m in Sources */,
-				490A51F518D784EF00DA939E /* PBURLBuilder.m in Sources */,
+				0D6D8EAE1EEEF53400B93029 /* PBCommandController.m in Sources */,
 				490A51F218D77D2400DA939E /* PBPackageInstaller.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -242,13 +240,19 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -280,14 +284,19 @@
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -304,7 +313,6 @@
 			baseConfigurationReference = 1FFD8688FFB22014A92F8D11 /* Pods-planb.debug.xcconfig */;
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "planb/planb-Prefix.pch";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				VALID_ARCHS = x86_64;
 			};
@@ -315,7 +323,6 @@
 			baseConfigurationReference = 39BB32E66CD18153F1F3AB32 /* Pods-planb.release.xcconfig */;
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "planb/planb-Prefix.pch";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				VALID_ARCHS = x86_64;
 			};

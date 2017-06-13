@@ -1,39 +1,38 @@
 /*
+  Copyright 2016 Google Inc.
 
- Plan B
- PBPackageInstaller.m
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License.  You may obtain a copy
+  of the License at
 
- Copyright 2016 Google Inc.
+  http://www.apache.org/licenses/LICENSE-2.0
 
- Licensed under the Apache License, Version 2.0 (the "License"); you may not
- use this file except in compliance with the License.  You may obtain a copy
- of the License at
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+  License for the specific language governing permissions and limitations under
+  the License.
+*/
 
- http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
- License for the specific language governing permissions and limitations under
- the License.
-
- */
+@import Foundation;
 
 #import <CommonCrypto/CommonDigest.h>
 
+#import "PBCommandController.h"
 #import "PBLogging.h"
 #import "PBPackageInstaller.h"
+
+static NSString *const kHdiutilPath = @"/usr/bin/hdiutil";
+static NSString *const kInstallerPath = @"/usr/sbin/installer";
+static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
 
 @interface PBPackageInstaller ()
 
 /// Package receipt name, e.g. 'com.megacorp.corp.pkg'.
 @property(readonly, nonatomic, copy) NSString *receiptName;
 
-/// Path to temporary dmg file, e.g. '/tmp/planb-dmg.ihI1UV/pkg-stable.dmg'.
-@property(readonly, nonatomic, copy) NSString *packagePath;
-
-/// Target volume for installation, e.g. '/'.
-@property(readonly, nonatomic, copy) NSString *targetVolume;
+/// The URL to downlaod the package from.
+@property(readonly, nonatomic, copy) NSURL *packageURL;
 
 /// Path to mounted disk image, e.g. '/tmp/planb-pkg.duc3eP'.
 @property(readonly, nonatomic, copy) NSString *mountPoint;
@@ -42,30 +41,70 @@
 
 @implementation PBPackageInstaller
 
-- (instancetype)initWithReceiptName:(NSString *)receiptName
-                        packagePath:(NSString *)packagePath
-                       targetVolume:(NSString *)targetVolume {
+- (instancetype)initWithURL:(NSURL *)packageURL
+                receiptName:(NSString *)receipt {
   self = [super init];
 
   if (self) {
-    if (!receiptName.length || !packagePath.length || !targetVolume.length) {
+    if (!receipt.length || !packageURL.absoluteString.length) {
       return nil;
     }
 
-    _receiptName = [receiptName copy];
-    _packagePath = [packagePath copy];
-    _targetVolume = [targetVolume copy];
+    _receiptName = [receipt copy];
+    _packageURL = [packageURL copy];
+    _mountPoint = [self generateMountPoint];
+
+    _downloadAttemptsMax = 5;
+    _downloadTimeoutSeconds = 300;
+    _session = [NSURLSession sharedSession];
   }
 
   return self;
 }
 
+- (void)dealloc {
+  if (self.mountPoint) {
+    NSError *err;
+    [[NSFileManager defaultManager] removeItemAtPath:self.mountPoint error:&err];
+    if (err) {
+      [self log:@"Error: could not delete temporary mount point %@: %@",
+          self.mountPoint, err.localizedDescription];
+    }
+  }
+}
+
+- (BOOL)install {
+  NSString *path = [self downloadPackage];
+  if (!path) return NO;
+
+  BOOL success = [self diskImageAttach:path];
+  if (!success) return NO;
+
+  [self log:@"Mounted at %@", self.mountPoint];
+
+  // We don't care if this works or not.
+  [self forgetPackageWithName:self.receiptName];
+
+  // TODO(rah): Add ability to install to a different volume.
+  success = [self installPackageFromLocation:[self firstPackageOnImage] toVolume:@"/"];
+  if (success) {
+    [self log:@"Install complete"];
+  }
+
+  // Success is not tied to whether detaching succeeded.
+  [self diskImageDetach];
+
+  return success;
+}
+
+#pragma mark Helper Methods
+
 - (NSString *)firstPackageOnImage {
   NSFileManager *fm = [NSFileManager defaultManager];
-  NSError *fmError = nil;
+  NSError *fmError;
   NSArray *dirContents = [fm contentsOfDirectoryAtPath:self.mountPoint error:&fmError];
-  if (fmError) {
-    PBLog(@"Error: could not determine package path: %@", fmError);
+  if (!dirContents) {
+    [self log:@"Error: could not determine package path: %@", fmError];
     return nil;
   }
 
@@ -74,168 +113,93 @@
   return [onlyPKGs firstObject];
 }
 
-- (void)installApplication {
-  NSFileManager *fm = [NSFileManager defaultManager];
-
+- (NSString *)generateMountPoint {
   char tmpdir[] = "/tmp/planb-pkg.XXXXXX";
   if (!mkdtemp(tmpdir)) {
-    PBLog(@"Error: Could not create temporary installation directory %s.", tmpdir);
-    return;
+    [self log:@"Error: could not create temporary installation directory %s.", tmpdir];
+    return nil;
   }
-
-  self.mountPoint = [fm stringWithFileSystemRepresentation:tmpdir length:strlen(tmpdir)];
-  if ([self runDiskUtilityWithLocation:self.packagePath operation:@"attach"]) {
-    PBLog(@"Mounted %@ (SHA1: %@) to %@",
-          self.packagePath,
-          [self SHA1ForFileAtPath:self.packagePath],
-          self.mountPoint);
-
-    [self forgetPackageWithName:self.receiptName];
-    [self installPackageFromLocation:[self firstPackageOnImage] toVolume:self.targetVolume];
-  }
-
-  [self runDiskUtilityWithLocation:self.packagePath operation:@"detach"];
-
-  NSError *err;
-  [fm removeItemAtPath:self.mountPoint error:&err];
-  if (err) {
-    PBLog(@"Error: could not delete temporary mount point %@: %@",
-          self.mountPoint, err.localizedDescription);
-  }
+  return [[NSFileManager defaultManager] stringWithFileSystemRepresentation:tmpdir
+                                                                     length:strlen(tmpdir)];
 }
 
-- (BOOL)runDiskUtilityWithLocation:(NSString *)location operation:(NSString *)operation {
-  NSArray *args;
+- (NSString *)downloadPackage {
+  __block NSString *path;  // path of downloaded package file
 
-  if ([operation isEqual:@"attach"]) {
-    args = @[ operation, location, @"-nobrowse", @"-readonly", @"-mountpoint", self.mountPoint ];
-  } else if ([operation isEqual:@"detach"]) {
-    args = @[ operation, @"-force", self.mountPoint ];
-  } else {
-    return NO;
+  for (NSUInteger i = 1; i <= self.downloadAttemptsMax; ++i) {
+    [self log:@"Downloading, attempt %tu/%tu", i, self.downloadAttemptsMax];
+
+    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+    [[self.session downloadTaskWithURL:self.packageURL completionHandler:^(NSURL *location,
+                                                                           NSURLResponse *response,
+                                                                           NSError *error) {
+      if (((NSHTTPURLResponse *)response).statusCode == 200) {
+        path = location.path;
+      }
+      dispatch_semaphore_signal(sema);
+    }] resume];
+    dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW,
+                                                self.downloadTimeoutSeconds * NSEC_PER_SEC));
+
+    if (path) {
+      [self log:@"Download complete, SHA-1: %@", [self SHA1ForFileAtPath:path]];
+      break;
+    }
   }
 
-  NSTask *hdiutil = [[NSTask alloc] init];
-  NSPipe *pipe = [NSPipe pipe];
+  return path;
+}
 
-  [hdiutil setLaunchPath:@"/usr/bin/hdiutil"];
-  [hdiutil setArguments:args];
-  [hdiutil setStandardOutput:pipe];
-  [hdiutil setStandardError:pipe];
-  [hdiutil setStandardInput:[NSPipe pipe]];
-  @try {
-    [hdiutil launch];
-  } @catch (NSException *exception) {
-    PBLog(@"Exception: hdiutil failed to launch.");
-    return NO;
-  }
+- (BOOL)diskImageAttach:(NSString *)path {
+  PBCommandController *t = [[PBCommandController alloc] init];
+  t.launchPath = kHdiutilPath;
+  t.arguments = @[ @"attach",
+                   path,
+                   @"-nobrowse",
+                   @"-readonly",
+                   @"-mountpoint",
+                   self.mountPoint ];
+  t.timeout = 30;
+  return [t launchWithOutput:NULL] == 0;
+}
 
-  NSData *stdBuff = [self runTask:hdiutil outputPipe:pipe timeout:30];
-
-  if (stdBuff && [hdiutil terminationStatus] == 0) {
-    return YES;
-  } else {
-    NSString *pipeOut = [[NSString alloc] initWithData:stdBuff encoding:NSUTF8StringEncoding];
-    PBLog(@"Error: failed to %@ %@: %@", operation, self.packagePath, pipeOut);
-    return NO;
-  }
+- (BOOL)diskImageDetach {
+  PBCommandController *t = [[PBCommandController alloc] init];
+  t.launchPath = kHdiutilPath;
+  t.arguments = @[ @"detach", @"-force", self.mountPoint ];
+  t.timeout = 30;
+  return [t launchWithOutput:NULL] == 0;
 }
 
 - (BOOL)installPackageFromLocation:(NSString *)location toVolume:(NSString *)volume {
-  if ([[location pathComponents] count] != 1) {
-    PBLog(@"Error: %@ is not a direct subpath.", location);
+  if (location.pathComponents.count != 1) {
+    [self log:@"Error: %@ is not a direct subpath", location];
     return NO;
   }
 
   NSString *packageLocation = [self.mountPoint stringByAppendingPathComponent:location];
-  NSArray *args = @[ @"-pkg", packageLocation, @"-tgt", volume ];
-  NSTask *installer = [[NSTask alloc] init];
-  NSPipe *pipe = [NSPipe pipe];
+  [self log:@"Attempting to install %@ to %@", packageLocation, volume];
+//  PBLog(@"%@ Attempting to install %@ to %@", self.logPrefix, packageLocation, volume);
 
-  PBLog(@"Attempting to install %@ to %@", packageLocation, volume);
+  PBCommandController *t = [[PBCommandController alloc] init];
+  t.launchPath = kInstallerPath;
+  t.arguments = @[ @"-pkg", packageLocation, @"-tgt", volume ];
+  t.timeout = (60 * 5);  // some packages take a while, especially if they have postflight scripts.
 
-  [installer setLaunchPath:@"/usr/sbin/installer"];
-  [installer setArguments:args];
-  [installer setStandardOutput:pipe];
-  [installer setStandardError:pipe];
-  [installer setStandardInput:[NSPipe pipe]];
-  @try {
-    [installer launch];
-  } @catch (NSException *exception) {
-    PBLog(@"Exception: installer failed to launch.");
+  NSString *output;
+  if ([t launchWithOutput:&output] != 0) {
+    [self log:@"Error: failed to install %@: %@", location, output];
     return NO;
   }
-
-  // some packages may take several minutes to install, especially if they have postlight scripts.
-  NSData *stdBuff = [self runTask:installer outputPipe:pipe timeout:60 * 5];
-
-  if (stdBuff && [installer terminationStatus] == 0) {
-    // DMG may be ejected before installer is done, so sleep for a few seconds first.
-    sleep(3);
-    PBLog(@"Installed %@", location);
-    return YES;
-  } else {
-    NSString *pipeOut = [[NSString alloc] initWithData:stdBuff
-                                              encoding:NSUTF8StringEncoding];
-    PBLog(@"Error: failed to install %@: %@", location, pipeOut);
-    return NO;
-  }
+  return YES;
 }
 
-- (BOOL)forgetPackageWithName:(NSString *)packageReceipt {
-  NSArray *args = @[ @"--forget", packageReceipt ];
-  NSTask *pkgutil = [[NSTask alloc] init];
-  NSPipe *pipe = [NSPipe pipe];
-
-  [pkgutil setLaunchPath:@"/usr/sbin/pkgutil"];
-  [pkgutil setArguments:args];
-  [pkgutil setStandardOutput:pipe];
-  [pkgutil setStandardError:pipe];
-  [pkgutil setStandardInput:[NSPipe pipe]];
-  @try {
-    [pkgutil launch];
-  }
-  @catch (NSException *exception) {
-    PBLog(@"Exception: pkgutil failed to launch.");
-    return NO;
-  }
-
-  NSData *stdBuff = [self runTask:pkgutil outputPipe:pipe timeout:3];
-
-  if (stdBuff && [pkgutil terminationStatus] == 0) {
-    PBLog(@"Forgot %@", self.receiptName);
-    return YES;
-  } else {
-    NSString *pipeOut = [[NSString alloc] initWithData:stdBuff encoding:NSUTF8StringEncoding];
-    PBLog(@"Error: cannot forget %@: %@", self.receiptName, pipeOut);
-    return NO;
-  }
-}
-
-- (NSData *)runTask:(NSTask *)task outputPipe:(NSPipe *)pipe timeout:(NSTimeInterval)timeout {
-  NSDate *startDate = [NSDate date];
-  NSMutableData *stdBuff = [[NSMutableData alloc] init];
-
-  do {
-    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:1]];
-
-    NSData *availableData = [[pipe fileHandleForReading] availableData];
-
-    if (availableData.length) {
-      [stdBuff appendData:availableData];
-    }
-  } while ([task isRunning] && -[startDate timeIntervalSinceNow] < timeout);
-
-  // If task has exceeded its timeout, kill it.
-  if ([task isRunning]) {
-    kill([task processIdentifier], SIGKILL);
-    sleep(1);
-    if ([task isRunning]) {
-      return nil;
-    }
-  }
-
-  return [stdBuff copy];
+- (void)forgetPackageWithName:(NSString *)packageReceipt {
+  PBCommandController *t = [[PBCommandController alloc] init];
+  t.launchPath = kPkgutilPath;
+  t.arguments = @[ @"--forget", packageReceipt ];
+  t.timeout = 10;
+  [t launchWithOutput:NULL];
 }
 
 - (NSString *)SHA1ForFileAtPath:(NSString *)path {
@@ -252,6 +216,15 @@
   }
 
   return buf;
+}
+
+- (void)log:(NSString *)fmt, ... NS_FORMAT_FUNCTION(1,2) {
+  va_list ap;
+  va_start(ap, fmt);
+  NSString *formatted = [[NSString alloc] initWithFormat:fmt arguments:ap];
+  va_end(ap);
+
+  PBLog(@"%@ %@", self.logPrefix, formatted);
 }
 
 @end
