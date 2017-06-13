@@ -90,7 +90,9 @@ int main(int argc, const char **argv) {
     config.URLCache = nil;
 
     if (![[[NSProcessInfo processInfo] arguments] containsObject:@"--use-proxy"]) {
-      config.connectionProxyDictionary = @{ (NSString *)kCFNetworkProxiesHTTPSEnable: @NO };
+      config.connectionProxyDictionary = @{
+          (__bridge NSString *)kCFNetworkProxiesHTTPSEnable: @NO
+      };
     }
 
     MOLAuthenticatingURLSession *authURLSession =

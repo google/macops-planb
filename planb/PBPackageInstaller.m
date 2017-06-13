@@ -22,6 +22,10 @@
 #import "PBLogging.h"
 #import "PBPackageInstaller.h"
 
+static NSString *const kHdiutilPath = @"/usr/bin/hdiutil";
+static NSString *const kInstallerPath = @"/usr/sbin/installer";
+static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
+
 @interface PBPackageInstaller ()
 
 /// Package receipt name, e.g. 'com.megacorp.corp.pkg'.
@@ -36,10 +40,6 @@
 @end
 
 @implementation PBPackageInstaller
-
-static NSString *const kHdiutilPath = @"/usr/bin/hdiutil";
-static NSString *const kInstallerPath = @"/usr/sbin/installer";
-static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
 
 - (instancetype)initWithURL:(NSURL *)packageURL
                 receiptName:(NSString *)receipt {
@@ -67,8 +67,8 @@ static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
     NSError *err;
     [[NSFileManager defaultManager] removeItemAtPath:self.mountPoint error:&err];
     if (err) {
-      PBLog(@"%@ Error: could not delete temporary mount point %@: %@",
-            self.logPrefix, self.mountPoint, err.localizedDescription);
+      [self log:@"Error: could not delete temporary mount point %@: %@",
+          self.mountPoint, err.localizedDescription];
     }
   }
 }
@@ -80,21 +80,19 @@ static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
   BOOL success = [self diskImageAttach:path];
   if (!success) return NO;
 
-  PBLog(@"%@ Mounted at %@", self.logPrefix, self.mountPoint);
+  [self log:@"Mounted at %@", self.mountPoint];
 
   // We don't care if this works or not.
   [self forgetPackageWithName:self.receiptName];
 
   // TODO(rah): Add ability to install to a different volume.
-  success &= [self installPackageFromLocation:[self firstPackageOnImage]
-                                     toVolume:@"/"];
+  success = [self installPackageFromLocation:[self firstPackageOnImage] toVolume:@"/"];
+  if (success) {
+    [self log:@"Install complete"];
+  }
 
   // Success is not tied to whether detaching succeeded.
   [self diskImageDetach];
-
-  if (success) {
-    PBLog(@"%@ Install complete", self.logPrefix);
-  };
 
   return success;
 }
@@ -103,9 +101,9 @@ static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
 
 - (NSString *)firstPackageOnImage {
   NSFileManager *fm = [NSFileManager defaultManager];
-  NSError *fmError = nil;
+  NSError *fmError;
   NSArray *dirContents = [fm contentsOfDirectoryAtPath:self.mountPoint error:&fmError];
-  if (fmError) {
+  if (!dirContents) {
     [self log:@"Error: could not determine package path: %@", fmError];
     return nil;
   }
@@ -128,8 +126,8 @@ static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
 - (NSString *)downloadPackage {
   __block NSString *path;  // path of downloaded package file
 
-  for (unsigned long i = 1; i <= self.downloadAttemptsMax; ++i) {
-    [self log:@"Downloading, attempt %lu/%lu", i, (unsigned long)self.downloadAttemptsMax];
+  for (NSUInteger i = 1; i <= self.downloadAttemptsMax; ++i) {
+    [self log:@"Downloading, attempt %tu/%tu", i, self.downloadAttemptsMax];
 
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
     [[self.session downloadTaskWithURL:self.packageURL completionHandler:^(NSURL *location,
@@ -160,7 +158,7 @@ static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
                    @"-nobrowse",
                    @"-readonly",
                    @"-mountpoint",
-                   self.mountPoint];
+                   self.mountPoint ];
   t.timeout = 30;
   return [t launchWithOutput:NULL] == 0;
 }
@@ -185,7 +183,7 @@ static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
 
   PBCommandController *t = [[PBCommandController alloc] init];
   t.launchPath = kInstallerPath;
-  t.arguments = @[ @"-pkg", packageLocation, @"-tgt", volume];
+  t.arguments = @[ @"-pkg", packageLocation, @"-tgt", volume ];
   t.timeout = (60 * 5);  // some packages take a while, especially if they have postflight scripts.
 
   NSString *output;

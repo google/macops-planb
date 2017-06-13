@@ -16,7 +16,8 @@
 
 @import Foundation;
 
-/// TODO: fill!
+/// PBPackageInstaller handles downloading, mounting and installing a package,
+/// while forgetting the existing package receipt where necessary.
 @interface PBPackageInstaller : NSObject
 
 - (instancetype)init NS_UNAVAILABLE;
