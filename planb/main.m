@@ -123,6 +123,6 @@ int main(int argc, const char **argv) {
       success &= [pkgInstaller install];
     }];
 
-    return success;
+    return !success;
   }
 }
