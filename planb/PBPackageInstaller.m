@@ -147,7 +147,7 @@ static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
     if (path) {
       [self log:@"Download complete, SHA-1: %@", [self SHA1ForFileAtPath:path]];
       break;
-    } else if (errorDescription && i == self.downloadAttemptsMax) {
+    } else if (errorDescription) {
       [self log:@"Download failed: %@", errorDescription];
     }
   }
