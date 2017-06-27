@@ -125,6 +125,7 @@ static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
 
 - (NSString *)downloadPackage {
   __block NSString *path;  // path of downloaded package file
+  __block NSString *errorDescription;
 
   for (NSUInteger i = 1; i <= self.downloadAttemptsMax; ++i) {
     [self log:@"Downloading, attempt %tu/%tu", i, self.downloadAttemptsMax];
@@ -135,6 +136,8 @@ static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
                                                                            NSError *error) {
       if (((NSHTTPURLResponse *)response).statusCode == 200) {
         path = location.path;
+      } else {
+        errorDescription = error.localizedDescription;
       }
       dispatch_semaphore_signal(sema);
     }] resume];
@@ -144,6 +147,8 @@ static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
     if (path) {
       [self log:@"Download complete, SHA-1: %@", [self SHA1ForFileAtPath:path]];
       break;
+    } else if (errorDescription && i == self.downloadAttemptsMax) {
+      [self log:@"Download failed: %@", errorDescription];
     }
   }
 
@@ -179,7 +184,6 @@ static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
 
   NSString *packageLocation = [self.mountPoint stringByAppendingPathComponent:location];
   [self log:@"Attempting to install %@ to %@", packageLocation, volume];
-//  PBLog(@"%@ Attempting to install %@ to %@", self.logPrefix, packageLocation, volume);
 
   PBCommandController *t = [[PBCommandController alloc] init];
   t.launchPath = kInstallerPath;
