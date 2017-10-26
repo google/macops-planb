@@ -87,6 +87,7 @@
 
   if ([self.task isRunning]) {
     kill(self.task.processIdentifier, SIGKILL);
+    sleep(2); // Give the process time to exit
   }
 
   if (exception) {
@@ -98,7 +99,13 @@
     NSData *availableData = [[self.task.standardOutput fileHandleForReading] availableData];
     *output = [[NSString alloc] initWithData:availableData encoding:NSUTF8StringEncoding];
   }
-  return self.task.terminationStatus;
+
+  int status = -1;
+  @try {
+    status = self.task.terminationStatus;
+  } @catch (NSException *e) {}
+
+  return status;
 }
 
 @end
