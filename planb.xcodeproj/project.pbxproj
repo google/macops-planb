@@ -179,7 +179,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cp ${SRCROOT}/planb/roots.pem ${DERIVED_FILE_DIR}/ROOTS.PEM\n\ncd ${DERIVED_FILE_DIR}\n\n# Remove comments\nsed -i '' -e '/^#.*/d' ROOTS.PEM\n\n# Remove empty lines\nsed -i '' -e '/^$/d' ROOTS.PEM\n\nxxd -i ROOTS.PEM > roots.pem.h\n\nrm ROOTS.PEM";
+			shellScript = "cp \"${SRCROOT}\"/planb/roots.pem ${DERIVED_FILE_DIR}/ROOTS.PEM\n\ncd ${DERIVED_FILE_DIR}\n\n# Remove comments\nsed -i '' -e '/^#.*/d' ROOTS.PEM\n\n# Remove empty lines\nsed -i '' -e '/^$/d' ROOTS.PEM\n\nxxd -i ROOTS.PEM > roots.pem.h\n\nrm ROOTS.PEM";
 		};
 		450FBE8FE0A109E05DC9E5CD /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;

@@ -1,5 +1,5 @@
 platform :osx, "10.11"
-xcodeproj "./planb.xcodeproj"
+project "./planb.xcodeproj"
 
 target :planb do
   pod 'MOLAuthenticatingURLSession'

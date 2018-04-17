@@ -25,17 +25,19 @@ If the server has enabled client certificate authentication, first install the c
 
 Compiling Plan B requires a modern version of Xcode, available from Apple's Developer site.
 
-* Download the source code with `git clone https://github.com/google/macops-planb` 
+* Download the source code with `git clone https://github.com/google/macops-planb`
+
+* Change directory into the repo `cd macops-planb`
 
 * Install required CocoaPods with `pod install`
 
-* Open the Xcode project with `open macops-planb/planb.xcworkspace`
+* Open the Xcode project with `open planb.xcworkspace`
 
-* Edit `PBURLBuilder.m` and change `kBaseURL` to the URL of the server and folder containing disk images. By default, the program will use `https://mac.internal.megacorp.com/pkgs/`
+* Edit `main.m` and change `kBaseURL` to the URL of the server and folder containing disk images. By default, the program will use `https://mac.internal.megacorp.com/pkgs/`
 
 * Edit `main.m` and change the `packages` array to match the names of disk image names and their contained packages' receipt names. By default, the program will construct `pkg1/package1-stable.dmg` and forget the receipt for package `com.megacorp.package1` prior to re-installation, and so on.
 
-* Edit `PBURLBuilder.m` and change the `kMachineInfo` to match a machine information plist, which may contain a `ConfigurationTrack` value, for example. This value is used to construct the disk image suffix, like `package1-stable.dmg`, `package1-testing.dmg` or `package1-unstable.dmg`. This is useful if you have machines on multiple configuration tracks.
+* Edit `main.m` and change the `kMachineInfo` to match a machine information plist, which may contain a `ConfigurationTrack` value, for example. This value is used to construct the disk image suffix, like `package1-stable.dmg`, `package1-testing.dmg` or `package1-unstable.dmg`. This is useful if you have machines on multiple configuration tracks.
 
 * Edit `roots.pem` and change the contents to include a single or multiple PEM-encoded certificate authority certificates you wish to trust for server validation. By default, the program will use `GeoTrust Global CA`, the authority used to sign Google's intermediate CA, however you should use the CA which has signed the server's certificate or the server's intermediate certificate.
 
