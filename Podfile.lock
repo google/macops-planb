@@ -6,10 +6,15 @@ PODS:
 DEPENDENCIES:
   - MOLAuthenticatingURLSession
 
+SPEC REPOS:
+  https://github.com/CocoaPods/Specs.git:
+    - MOLAuthenticatingURLSession
+    - MOLCertificate
+
 SPEC CHECKSUMS:
   MOLAuthenticatingURLSession: 5a5e31eb73248c3e92c79b9a285f031194e8404c
   MOLCertificate: c39cae866d24d36fbc78032affff83d401b5384a
 
-PODFILE CHECKSUM: 5febcbf6dc5fbde870f29e0902990903533effcf
+PODFILE CHECKSUM: c0f82156d67fd06f0c9c099371dee689b0161184
 
-COCOAPODS: 1.2.0
+COCOAPODS: 1.5.0
