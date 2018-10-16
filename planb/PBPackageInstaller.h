@@ -24,7 +24,8 @@
 
 /// Designated initializer.
 - (instancetype)initWithURL:(NSURL *)packageURL
-                receiptName:(NSString *)receipt NS_DESIGNATED_INITIALIZER;
+                receiptName:(NSString *)receipt
+                   checksum:(NSString *)checksum NS_DESIGNATED_INITIALIZER;
 
 /// The NSURLSession to use for downloading packages. If not set, a default one will be used.
 @property NSURLSession *session;
