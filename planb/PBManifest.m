@@ -20,9 +20,9 @@
 
 #import "PBLogging.h"
 
-static NSString *const kNameKey = @"name";
-static NSString *const kURLKey = @"url";
-static NSString *const kSHA256Key = @"sha256";
+static NSString * const kNameKey = @"name";
+static NSString * const kURLKey = @"url";
+static NSString * const kSHA256Key = @"sha256";
 
 @interface PBManifest()
 
@@ -80,6 +80,8 @@ static NSString *const kSHA256Key = @"sha256";
 
   if (jsonData) {
     [self parseManifestData:jsonData];
+  } else {
+    PBLog(@"Error: couldn't download manifest from %@", self.manifestURL.absoluteString);
   }
 }
 
@@ -102,23 +104,34 @@ static NSString *const kSHA256Key = @"sha256";
       PBLog(@"Invalid manifest -- track key is not a string: %@", track);
       return;
     }
-    if (![manifest[track] isKindOfClass:[NSDictionary class]]) {
-      PBLog(@"Invalid manifest -- track %@ value is not a dictionary: %@", track, manifest[track]);
+    if (![manifest[track] isKindOfClass:[NSArray class]]) {
+      PBLog(@"Invalid manifest -- track %@ value is not an array: %@", track, manifest[track]);
       return;
     }
-    NSDictionary *package = (NSDictionary *)manifest[track];
-    for (id key in package) {
-      if (![key isKindOfClass:[NSString class]]) {
-        PBLog(@"Invalid manifest -- package key is not a string: %@", key);
-        return;
-      }
-      if (![package[key] isKindOfClass:[NSString class]]) {
-        PBLog(@"Invalid manifest -- package key %@ value is not a string: %@", key, package[key]);
-        return;
-      }
+    for (id object in (NSArray *)manifest[track]) {
+      if (![self validatePackage:object]) return;
     }
   }
   self.manifest = (NSDictionary *)jsonObject;
+}
+
+- (BOOL)validatePackage:(id)object {
+  if (![object isKindOfClass:[NSDictionary class]]) {
+    PBLog(@"Invalid manifest -- package item is not a dictionary: %@", object)
+    return NO;
+  }
+  NSDictionary *package = (NSDictionary *)object;
+  for (id key in package) {
+    if (![key isKindOfClass:[NSString class]]) {
+      PBLog(@"Invalid manifest -- package key is not a string: %@", key);
+      return NO;
+    }
+    if (![package[key] isKindOfClass:[NSString class]]) {
+      PBLog(@"Invalid manifest -- value for package key %@ is not a string: %@", key, package[key]);
+      return NO;
+    }
+  }
+  return YES;
 }
 
 - (NSArray *)packagesForTrack:(NSString *)track {

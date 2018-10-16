@@ -165,7 +165,7 @@ static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
   NSString *checksum = [self SHA256ForFileAtPath:path];
   [self log:@"Package SHA-256: %@", checksum];
   if (self.checksum.length && ![self.checksum isEqualToString:checksum]) {
-    [self log:@"Checksum doesn't match expected (%@), deleting...", self.checksum];
+    [self log:@"Error: checksum doesn't match expected (%@), deleting...", self.checksum];
     NSFileManager *fm = [NSFileManager defaultManager];
     NSError *error;
     if (![fm removeItemAtPath:path error:&error]) {
