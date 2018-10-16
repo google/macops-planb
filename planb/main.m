@@ -26,7 +26,7 @@
 #import <MOLAuthenticatingURLSession/MOLAuthenticatingURLSession.h>
 
 static NSString * const kBaseURL = @"https://mac.internal.megacorp.com/pkgs/";
-static NSString * const kManifestURL = @"https://mac.internal.megacorp.com/manifest";
+static NSString * const kManifestURL = @"https://mac.internal.megacorp.com/manifest.json";
 static NSString * const kMachineInfo = @"/Library/Preferences/com.megacorp.machineinfo.plist";
 static NSString * const kMachineInfoKey = @"ConfigurationTrack";
 static NSString * const kAssertionName = @"planb";
