@@ -140,8 +140,14 @@ static NSString * const kSHA256Key = @"sha256";
   }
   NSMutableArray *result = [NSMutableArray array];
   for (NSDictionary *package in self.manifest[track]) {
-    if (!package[kURLKey]) continue;
-    if (!package[kNameKey]) continue;
+    if (!package[kURLKey]) {
+      PBLog(@"Manifest item is missing %@ key, skipping: %@", kURLKey, package);
+      continue;
+    }
+    if (!package[kNameKey]) {
+      PBLog(@"Manifest item is missing %@ key, skipping: %@", kNameKey, package);
+      continue;
+    }
     if (package[kSHA256Key]) {
       [result addObject:@[package[kURLKey], package[kNameKey], package[kSHA256Key]]];
     } else {
