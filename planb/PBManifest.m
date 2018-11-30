@@ -27,7 +27,7 @@ static NSString * const kSHA256Key = @"sha256";
 @interface PBManifest()
 
 /// The URL to download the package manifest from.
-@property(readonly, nonatomic, copy) NSURL *manifestURL;
+@property(readonly, nonatomic) NSURL *manifestURL;
 
 /// The parsed manifest data.
 @property(nonatomic) NSDictionary *manifest;
@@ -61,9 +61,11 @@ static NSString * const kSHA256Key = @"sha256";
     [[self.session dataTaskWithURL:self.manifestURL completionHandler:^(NSData *data,
                                                                         NSURLResponse *response,
                                                                         NSError *error) {
-      if (((NSHTTPURLResponse *)response).statusCode == 200) {
+      if (![response isKindOfClass:[NSHTTPURLResponse class]] ||
+          ((NSHTTPURLResponse *)response).statusCode == 200) {
         jsonData = data;
-      } else {
+      }
+      if (error) {
         errorDescription = error.localizedDescription;
       }
       dispatch_semaphore_signal(sema);
@@ -88,7 +90,7 @@ static NSString * const kSHA256Key = @"sha256";
 - (void)parseManifestData:(NSData *)data {
   NSError *error;
   id jsonObject = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
-  if (error) {
+  if (!jsonObject) {
     PBLog(@"Error parsing manifest: %@", error.localizedDescription);
     return;
   }

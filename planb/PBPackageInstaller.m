@@ -139,9 +139,11 @@ static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
     [[self.session downloadTaskWithURL:self.packageURL completionHandler:^(NSURL *location,
                                                                            NSURLResponse *response,
                                                                            NSError *error) {
-      if (((NSHTTPURLResponse *)response).statusCode == 200) {
+      if (![response isKindOfClass:[NSHTTPURLResponse class]] ||
+          ((NSHTTPURLResponse *)response).statusCode == 200) {
         path = location.path;
-      } else {
+      }
+      if (error) {
         errorDescription = error.localizedDescription;
       }
       dispatch_semaphore_signal(sema);
