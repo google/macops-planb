@@ -34,6 +34,8 @@
 @property NSURLSession *session;
 
 /// The number of seconds to allow downloading before timing out. Defaults to 300 (5 minutes).
+/// TODO(nguyenphillip): use session config's timeoutIntervalForResource to handle timeouts, and
+/// make session a required argument of initializer for both PBManifest and PBPackageInstaller.
 @property NSUInteger downloadTimeoutSeconds;
 
 /// The number of download attempts before giving up. Defaults to 5.
