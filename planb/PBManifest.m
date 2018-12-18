@@ -98,7 +98,11 @@ static NSString * const kSHA256Key = @"sha256";
     return NO;
   }
   // Validate the manifest data which should have the form:
-  // {"track1": [ {"key1": "val1", "key2": "val2", ...}, ... ], ...}
+  // {"packages": [ <pkg1>, <pkg2>, ...]}
+  // Each package object in the list should have the form:
+  // {"name":"xxx", "package_id":"xxx", "tracks":{"aaa": <fileobj>, "bbb": <fileobj>, ...}}
+  // Each file object value in the tracks dict should have the form:
+  // {"filename":"xxx", "sha256":"xxx"} where the "sha256" key is optional.
   if (![jsonObject isKindOfClass:[NSDictionary class]]) {
     PBLog(@"Invalid manifest -- root object is not a dictionary");
     return NO;
