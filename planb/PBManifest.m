@@ -12,7 +12,7 @@
  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
  License for the specific language governing permissions and limitations under
  the License.
- */
+*/
 
 #import <CommonCrypto/CommonDigest.h>
 
@@ -20,8 +20,11 @@
 
 #import "PBLogging.h"
 
+static NSString * const kPackagesKey = @"packages";
 static NSString * const kNameKey = @"name";
-static NSString * const kURLKey = @"url";
+static NSString * const kPackageIDKey = @"package_id";
+static NSString * const kTracksKey = @"tracks";
+static NSString * const kFilenameKey = @"filename";
 static NSString * const kSHA256Key = @"sha256";
 
 @interface PBManifest()
@@ -87,34 +90,33 @@ static NSString * const kSHA256Key = @"sha256";
   }
 }
 
-- (void)parseManifestData:(NSData *)data {
+- (BOOL)parseManifestData:(NSData *)data {
   NSError *error;
   id jsonObject = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
   if (!jsonObject) {
     PBLog(@"Error parsing manifest: %@", error.localizedDescription);
-    return;
+    return NO;
   }
   // Validate the manifest data which should have the form:
   // {"track1": [ {"key1": "val1", "key2": "val2", ...}, ... ], ...}
   if (![jsonObject isKindOfClass:[NSDictionary class]]) {
     PBLog(@"Invalid manifest -- root object is not a dictionary");
-    return;
+    return NO;
   }
   NSDictionary *manifest = (NSDictionary *)jsonObject;
-  for (id track in manifest) {
-    if (![track isKindOfClass:[NSString class]]) {
-      PBLog(@"Invalid manifest -- track key is not a string: %@", track);
-      return;
-    }
-    if (![manifest[track] isKindOfClass:[NSArray class]]) {
-      PBLog(@"Invalid manifest -- track %@ value is not an array: %@", track, manifest[track]);
-      return;
-    }
-    for (id object in (NSArray *)manifest[track]) {
-      if (![self validatePackage:object]) return;
+  if (![manifest[kPackagesKey] isKindOfClass:[NSArray class]]) {
+    PBLog(@"Invalid manifest -- value of %@ is not an array: %@",
+          kPackagesKey, manifest[kPackagesKey]);
+    return NO;
+  }
+  NSArray *packages = manifest[kPackagesKey];
+  for (id object in packages) {
+    if (![self validatePackage:object]) {
+      return NO;
     }
   }
-  self.manifest = (NSDictionary *)jsonObject;
+  self.manifest = manifest;
+  return YES;
 }
 
 - (BOOL)validatePackage:(id)object {
@@ -123,37 +125,71 @@ static NSString * const kSHA256Key = @"sha256";
     return NO;
   }
   NSDictionary *package = (NSDictionary *)object;
-  for (id key in package) {
-    if (![key isKindOfClass:[NSString class]]) {
-      PBLog(@"Invalid manifest -- package key is not a string: %@", key);
+  for (NSString *key in @[kNameKey, kPackageIDKey]) {
+    if (![package[key] isKindOfClass:[NSString class]]) {
+      PBLog(@"Invalid manifest -- package value for %@ key is not a string: %@", key, package[key]);
       return NO;
     }
-    if (![package[key] isKindOfClass:[NSString class]]) {
-      PBLog(@"Invalid manifest -- value for package key %@ is not a string: %@", key, package[key]);
+  }
+  if (![package[kTracksKey] isKindOfClass:[NSDictionary class]]) {
+    PBLog(@"Invalid manifest -- package value for %@ key is not a dictionary: %@",
+          kTracksKey, package[kTracksKey]);
+    return NO;
+  }
+  NSDictionary *tracks = package[kTracksKey];
+  for (id key in tracks) {
+    if (![key isKindOfClass:[NSString class]]) {
+      PBLog(@"Invalid manifest -- track key is not a string: %@", key);
+      return NO;
+    }
+    if (![self validateTrack:tracks[key]]) {
       return NO;
     }
   }
   return YES;
 }
 
-- (NSArray *)packagesForTrack:(NSString *)track {
+- (BOOL)validateTrack:(id)object {
+  if (![object isKindOfClass:[NSDictionary class]]) {
+    PBLog(@"Invalid manifest -- track item is not a dictionary: %@", object);
+    return NO;
+  }
+  NSDictionary *item = object;
+  for (NSString *key in @[kFilenameKey, kSHA256Key]) {
+    if (![item[key] isKindOfClass:[NSString class]]) {
+      PBLog(@"Invalid manifest -- track value for %@ key is not a string: %@", key, item[key]);
+      return NO;
+    }
+  }
+  return YES;
+}
+
+- (NSArray *)packagesForTrack:(NSString *)track relativeToURL:(NSURL *)baseURL {
   if (!self.manifest) {
     return @[];
   }
   NSMutableArray *result = [NSMutableArray array];
-  for (NSDictionary *package in self.manifest[track]) {
-    if (!package[kURLKey]) {
-      PBLog(@"Manifest item is missing %@ key, skipping: %@", kURLKey, package);
+  for (NSDictionary *package in self.manifest[kPackagesKey]) {
+    NSString *packageID = package[kPackageIDKey];
+    if (!packageID) {
+      PBLog(@"Package is missing %@ key, skipping: %@", kPackageIDKey, package);
       continue;
     }
-    if (!package[kNameKey]) {
-      PBLog(@"Manifest item is missing %@ key, skipping: %@", kNameKey, package);
+    NSDictionary *item = package[kTracksKey][track];
+    if (!item) {
+      PBLog(@"Package %@ has no item for %@ track, skipping", packageID, track);
       continue;
     }
-    if (package[kSHA256Key]) {
-      [result addObject:@[package[kURLKey], package[kNameKey], package[kSHA256Key]]];
+    if (!item[kFilenameKey]) {
+      PBLog(@"Package %@ in %@ is missing %@ key, skipping", packageID, track, kFilenameKey);
+      continue;
+    }
+    NSString *path = [[NSURL URLWithString:item[kFilenameKey] relativeToURL:baseURL]
+                      absoluteString];
+    if (item[kSHA256Key]) {
+      [result addObject:@[path, packageID, item[kSHA256Key]]];
     } else {
-      [result addObject:@[package[kURLKey], package[kNameKey]]];
+      [result addObject:@[path, packageID]];
     }
   }
   return result;

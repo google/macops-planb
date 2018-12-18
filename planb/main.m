@@ -91,7 +91,8 @@ NSArray* Packages(NSURLSession *session) {
     PBManifest *manifest = [[PBManifest alloc] initWithURL:[NSURL URLWithString:kManifestURL]];
     if (session) manifest.session = session;
     [manifest downloadManifest];
-    [result addObjectsFromArray:[manifest packagesForTrack:MachineTrack()]];
+    NSURL *baseURL = [NSURL URLWithString:kBaseURL];
+    [result addObjectsFromArray:[manifest packagesForTrack:MachineTrack() relativeToURL:baseURL]];
   }
 
   return result;

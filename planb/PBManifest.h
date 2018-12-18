@@ -12,7 +12,7 @@
  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
  License for the specific language governing permissions and limitations under
  the License.
- */
+*/
 
 @import Foundation;
 
@@ -27,8 +27,10 @@
 /// Download and parse the manifest.
 - (void)downloadManifest;
 
-/// Return list of packages in the manifest for the given track.
-- (NSArray *)packagesForTrack:(NSString *)track;
+/// Return list of packages in the manifest for the given track.  The path in baseURL is prepended
+/// to each relative package URL specified in the manifest.  Each package item is represented as
+/// an NSArray having the form @[<package-id>, <absolute-URL-to-package>, <SHA256>]
+- (NSArray *)packagesForTrack:(NSString *)track relativeToURL:(NSURL *)baseURL;
 
 /// The NSURLSession to use for downloading packages. If not set, a default one will be used.
 @property NSURLSession *session;
