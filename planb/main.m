@@ -20,24 +20,43 @@
 #include "roots.pem.h"
 
 #import "PBLogging.h"
+#import "PBManifest.h"
 #import "PBPackageInstaller.h"
 
 #import <MOLAuthenticatingURLSession/MOLAuthenticatingURLSession.h>
 
 static NSString * const kBaseURL = @"https://mac.internal.megacorp.com/pkgs/";
+static NSString * const kManifestURL = @"https://mac.internal.megacorp.com/manifest.json";
 static NSString * const kMachineInfo = @"/Library/Preferences/com.megacorp.machineinfo.plist";
 static NSString * const kMachineInfoKey = @"ConfigurationTrack";
 static NSString * const kAssertionName = @"planb";
 
 /**
-  Return the list of packages to install, along with their receipt names.
+  Return the list of hard-coded packages to install, along with their receipt names, and
+  optional SHA-256 checksums to be verified.
 */
-NSArray* Packages() {
+NSArray* StaticPackages() {
   return @[
       @[ @"pkg1/package1", @"com.megacorp.package1" ],
       @[ @"pkg2/package2", @"com.megacorp.package2" ],
       @[ @"pkg3/package3", @"com.megacorp.package3" ],
   ];
+}
+
+/**
+  Return the machine's track, read from the property list specified above. Defaults to "stable".
+ */
+NSString *MachineTrack() {
+  static dispatch_once_t onceToken;
+  static NSString *track;
+
+  dispatch_once(&onceToken, ^{
+    NSDictionary *machineInfoDictionary = [NSDictionary dictionaryWithContentsOfFile:kMachineInfo];
+    track = [[machineInfoDictionary objectForKey:kMachineInfoKey] lowercaseString];
+    if (!track.length) track = @"stable";
+  });
+
+  return track;
 }
 
 /**
@@ -50,18 +69,33 @@ NSArray* Packages() {
   E.g. using the default parameters above with the parameter 'pkg1/sample' the URL would be:
   https://mac.internal.megacorp.com/pkgbase/pkg1/sample-stable.dmg
 */
-NSURL* URLForPackagePath(NSString *pkg) {
-  static dispatch_once_t onceToken;
-  static NSString *track;
+NSString* StringURLForPackagePath(NSString *pkg) {
+  NSString *path = [NSString stringWithFormat:@"%@-%@.dmg", pkg, MachineTrack()];
+  NSURL *url = [NSURL URLWithString:path relativeToURL:[NSURL URLWithString:kBaseURL]];
+  return [url absoluteString];
+}
 
-  dispatch_once(&onceToken, ^{
-    NSDictionary *machineInfoDictionary = [NSDictionary dictionaryWithContentsOfFile:kMachineInfo];
-    track = [[machineInfoDictionary objectForKey:kMachineInfoKey] lowercaseString];
-    if (!track.length) track = @"stable";
-  });
+/**
+ Return the list of packages to install, both static and from a downloaded manifest.
+ */
+NSArray* Packages(NSURLSession *session) {
+  NSMutableArray *result = [NSMutableArray array];
 
-  NSString *path = [NSString stringWithFormat:@"%@-%@.dmg", pkg, track];
-  return [NSURL URLWithString:path relativeToURL:[NSURL URLWithString:kBaseURL]];
+  for (NSArray *item in StaticPackages()) {
+    NSMutableArray *newItem = [NSMutableArray arrayWithArray:item];
+    newItem[0] = StringURLForPackagePath(item[0]);
+    [result addObject:newItem];
+  }
+
+  if (kManifestURL.length) {
+    PBManifest *manifest = [[PBManifest alloc] initWithURL:[NSURL URLWithString:kManifestURL]];
+    if (session) manifest.session = session;
+    [manifest downloadManifest];
+    NSURL *baseURL = [NSURL URLWithString:kBaseURL];
+    [result addObjectsFromArray:[manifest packagesForTrack:MachineTrack() relativeToURL:baseURL]];
+  }
+
+  return result;
 }
 
 /**
@@ -105,14 +139,16 @@ int main(int argc, const char **argv) {
     };
 
     __block BOOL success = YES;
-    NSArray *packages = Packages();
-    [packages enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-      NSString *packagePath = [obj firstObject];
-      NSString *receiptName = [obj lastObject];
+    NSArray *packages = Packages(authURLSession.session);
+    [packages enumerateObjectsUsingBlock:^(NSArray* obj, NSUInteger idx, BOOL *stop) {
+      NSString *packagePath = obj[0];
+      NSString *receiptName = obj[1];
+      NSString *checksum = obj.count >= 3 ? obj[2] : nil;
 
       PBPackageInstaller *pkgInstaller =
-          [[PBPackageInstaller alloc] initWithURL:URLForPackagePath(packagePath)
-                                      receiptName:receiptName];
+          [[PBPackageInstaller alloc] initWithURL:[NSURL URLWithString:packagePath]
+                                      receiptName:receiptName
+                                         checksum:checksum];
       pkgInstaller.logPrefix =
           [NSString stringWithFormat:@"[%lu/%lu %@]",
               (unsigned long)idx + 1, (unsigned long)packages.count, receiptName];

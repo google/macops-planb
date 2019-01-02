@@ -31,8 +31,11 @@ static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
 /// Package receipt name, e.g. 'com.megacorp.corp.pkg'.
 @property(readonly, nonatomic, copy) NSString *receiptName;
 
-/// The URL to downlaod the package from.
+/// The URL to download the package from.
 @property(readonly, nonatomic, copy) NSURL *packageURL;
+
+/// Checksum of downloaded package for verification.
+@property(readonly, nonatomic, copy) NSString *checksum;
 
 /// Path to mounted disk image, e.g. '/tmp/planb-pkg.duc3eP'.
 @property(readonly, nonatomic, copy) NSString *mountPoint;
@@ -42,7 +45,8 @@ static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
 @implementation PBPackageInstaller
 
 - (instancetype)initWithURL:(NSURL *)packageURL
-                receiptName:(NSString *)receipt {
+                receiptName:(NSString *)receipt
+                   checksum:(NSString *)checksum {
   self = [super init];
 
   if (self) {
@@ -52,6 +56,7 @@ static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
 
     _receiptName = [receipt copy];
     _packageURL = [packageURL copy];
+    _checksum = [checksum copy];
     _mountPoint = [self generateMountPoint];
 
     _downloadAttemptsMax = 5;
@@ -134,9 +139,11 @@ static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
     [[self.session downloadTaskWithURL:self.packageURL completionHandler:^(NSURL *location,
                                                                            NSURLResponse *response,
                                                                            NSError *error) {
-      if (((NSHTTPURLResponse *)response).statusCode == 200) {
+      if (![response isKindOfClass:[NSHTTPURLResponse class]] ||
+          ((NSHTTPURLResponse *)response).statusCode == 200) {
         path = location.path;
-      } else {
+      }
+      if (error) {
         errorDescription = error.localizedDescription;
       }
       dispatch_semaphore_signal(sema);
@@ -145,7 +152,8 @@ static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
                                                 self.downloadTimeoutSeconds * NSEC_PER_SEC));
 
     if (path) {
-      [self log:@"Download complete, SHA-1: %@", [self SHA1ForFileAtPath:path]];
+      [self log:@"Download complete"];
+      [self validatePackage:path];
       break;
     } else if (errorDescription) {
       [self log:@"Download failed: %@", errorDescription];
@@ -153,6 +161,19 @@ static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
   }
 
   return path;
+}
+
+- (void)validatePackage:(NSString *)path {
+  NSString *checksum = [self SHA256ForFileAtPath:path];
+  [self log:@"Package SHA-256: %@", checksum];
+  if (self.checksum.length && ![self.checksum isEqualToString:checksum]) {
+    [self log:@"Error: checksum doesn't match expected (%@), deleting...", self.checksum];
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSError *error;
+    if (![fm removeItemAtPath:path error:&error]) {
+      [self log:@"Error: could not remove %@: %@", path, error];
+    }
+  }
 }
 
 - (BOOL)diskImageAttach:(NSString *)path {
@@ -206,17 +227,17 @@ static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
   [t launchWithOutput:NULL];
 }
 
-- (NSString *)SHA1ForFileAtPath:(NSString *)path {
-  unsigned char sha1[CC_SHA1_DIGEST_LENGTH];
+- (NSString *)SHA256ForFileAtPath:(NSString *)path {
+  unsigned char checksum[CC_SHA256_DIGEST_LENGTH];
   NSData *fileData = [NSData dataWithContentsOfFile:path
                                             options:NSDataReadingMappedIfSafe
                                               error:nil];
 
-  CC_SHA1(fileData.bytes, (CC_LONG)fileData.length, sha1);
-  NSMutableString *buf = [[NSMutableString alloc] initWithCapacity:CC_SHA1_DIGEST_LENGTH * 2];
+  CC_SHA256(fileData.bytes, (CC_LONG)fileData.length, checksum);
+  NSMutableString *buf = [[NSMutableString alloc] initWithCapacity:CC_SHA256_DIGEST_LENGTH * 2];
 
-  for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++) {
-    [buf appendFormat:@"%02x", sha1[i]];
+  for (int i = 0; i < CC_SHA256_DIGEST_LENGTH; i++) {
+    [buf appendFormat:@"%02x", checksum[i]];
   }
 
   return buf;
