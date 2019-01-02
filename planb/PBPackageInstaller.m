@@ -166,7 +166,9 @@ static NSString *const kPkgutilPath = @"/usr/sbin/pkgutil";
 - (void)validatePackage:(NSString *)path {
   NSString *checksum = [self SHA256ForFileAtPath:path];
   [self log:@"Package SHA-256: %@", checksum];
-  if (self.checksum.length && ![self.checksum isEqualToString:checksum]) {
+  if (!self.checksum.length) {
+    [self log:@"No checksum associated with package, skipping verification"];
+  } else if (![self.checksum isEqualToString:checksum]) {
     [self log:@"Error: checksum doesn't match expected (%@), deleting...", self.checksum];
     NSFileManager *fm = [NSFileManager defaultManager];
     NSError *error;

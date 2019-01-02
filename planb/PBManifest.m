@@ -26,6 +26,7 @@ static NSString * const kPackageIDKey = @"package_id";
 static NSString * const kTracksKey = @"tracks";
 static NSString * const kFilenameKey = @"filename";
 static NSString * const kSHA256Key = @"sha256";
+static NSString * const kPlanBIgnoreKey = @"planb_ignore";
 
 @interface PBManifest()
 
@@ -108,6 +109,7 @@ static NSString * const kSHA256Key = @"sha256";
     return NO;
   }
   NSDictionary *manifest = (NSDictionary *)jsonObject;
+  PBLog(@"Validating manifest...");
   if (![manifest[kPackagesKey] isKindOfClass:[NSArray class]]) {
     PBLog(@"Invalid manifest -- value of %@ is not an array: %@",
           kPackagesKey, manifest[kPackagesKey]);
@@ -135,6 +137,12 @@ static NSString * const kSHA256Key = @"sha256";
       return NO;
     }
   }
+  // Note: the "planb_ignore" key is optional, so we only verify its class if it exists.
+  if (package[kPlanBIgnoreKey] && ![package[kPlanBIgnoreKey] isKindOfClass:[NSNumber class]]) {
+    PBLog(@"Invalid manifest -- track value for %@ key is not a boolean: %@", kPlanBIgnoreKey,
+          package[kPlanBIgnoreKey]);
+    return NO;
+  }
   if (![package[kTracksKey] isKindOfClass:[NSDictionary class]]) {
     PBLog(@"Invalid manifest -- package value for %@ key is not a dictionary: %@",
           kTracksKey, package[kTracksKey]);
@@ -159,11 +167,16 @@ static NSString * const kSHA256Key = @"sha256";
     return NO;
   }
   NSDictionary *item = object;
-  for (NSString *key in @[kFilenameKey, kSHA256Key]) {
-    if (![item[key] isKindOfClass:[NSString class]]) {
-      PBLog(@"Invalid manifest -- track value for %@ key is not a string: %@", key, item[key]);
-      return NO;
-    }
+  if (![item[kFilenameKey] isKindOfClass:[NSString class]]) {
+    PBLog(@"Invalid manifest -- track value for %@ key is not a string: %@", kFilenameKey,
+          item[kFilenameKey]);
+    return NO;
+  }
+  // Note: the "sha256" is optional, so we only verify its class if it exists.
+  if (item[kSHA256Key] && ![item[kSHA256Key] isKindOfClass:[NSString class]]) {
+    PBLog(@"Invalid manifest -- track value for %@ key is not a string: %@", kSHA256Key,
+          item[kSHA256Key]);
+    return NO;
   }
   return YES;
 }
@@ -177,6 +190,10 @@ static NSString * const kSHA256Key = @"sha256";
     NSString *packageID = package[kPackageIDKey];
     if (!packageID) {
       PBLog(@"Package is missing %@ key, skipping: %@", kPackageIDKey, package);
+      continue;
+    }
+    if ([package[kPlanBIgnoreKey] boolValue]) {
+      PBLog(@"Package %@ has ignore key set, skipping", packageID);
       continue;
     }
     NSDictionary *item = package[kTracksKey][track];
