@@ -137,6 +137,7 @@ static NSString * const kPlanBIgnoreKey = @"planb_ignore";
       return NO;
     }
   }
+  // Note: the "planb_ignore" key is optional, so we only verify its class if it exists.
   if (package[kPlanBIgnoreKey] && ![package[kPlanBIgnoreKey] isKindOfClass:[NSNumber class]]) {
     PBLog(@"Invalid manifest -- track value for %@ key is not a boolean: %@", kPlanBIgnoreKey,
           package[kPlanBIgnoreKey]);
@@ -171,6 +172,7 @@ static NSString * const kPlanBIgnoreKey = @"planb_ignore";
           item[kFilenameKey]);
     return NO;
   }
+  // Note: the "sha256" is optional, so we only verify its class if it exists.
   if (item[kSHA256Key] && ![item[kSHA256Key] isKindOfClass:[NSString class]]) {
     PBLog(@"Invalid manifest -- track value for %@ key is not a string: %@", kSHA256Key,
           item[kSHA256Key]);
