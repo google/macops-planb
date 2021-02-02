@@ -70,7 +70,13 @@ static NSString * const kPlanBIgnoreKey = @"planb_ignore";
         jsonData = data;
       }
       if (error) {
-        errorDescription = error.localizedDescription;
+        if (data) {
+          NSString *body = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+          errorDescription =
+              [NSString stringWithFormat:@"%@\n%@", error.localizedDescription, body];
+        } else {
+          errorDescription = error.localizedDescription;
+        }
       }
       dispatch_semaphore_signal(sema);
     }] resume];
