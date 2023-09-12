@@ -123,10 +123,21 @@ int main(int argc, const char **argv) {
     NSURLSessionConfiguration *config = [NSURLSessionConfiguration ephemeralSessionConfiguration];
     config.URLCache = nil;
 
-    if (![[[NSProcessInfo processInfo] arguments] containsObject:@"--use-proxy"]) {
+    NSArray *args = [[NSProcessInfo processInfo] arguments];
+    if (![args containsObject:@"--use-proxy"]) {
       config.connectionProxyDictionary = @{
           (__bridge NSString *)kCFNetworkProxiesHTTPSEnable: @NO
       };
+    }
+    NSString *packageID;
+    NSUInteger packageIDIndex = [args indexOfObject:@"--packageid"];
+    if (packageIDIndex != NSNotFound) {
+      if (packageIDIndex + 1 < args.count) {
+        packageID = args[packageIDIndex + 1];
+      } else {
+        PBLog(@"planb: The --packageid flag requires a package id to be specified.");
+        return 1;
+      }
     }
 
     MOLAuthenticatingURLSession *authURLSession =
@@ -144,6 +155,10 @@ int main(int argc, const char **argv) {
       NSString *packagePath = obj[0];
       NSString *receiptName = obj[1];
       NSString *checksum = obj.count >= 3 ? obj[2] : nil;
+
+      if (packageID && ![packageID isEqualToString:receiptName]) {
+        return;
+      }
 
       PBPackageInstaller *pkgInstaller =
           [[PBPackageInstaller alloc] initWithURL:[NSURL URLWithString:packagePath]
